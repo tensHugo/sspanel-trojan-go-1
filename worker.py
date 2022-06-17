@@ -75,10 +75,11 @@ class Worker:
     def _generate_ssp_node_usage(self, data_usage):
         # 当没有历史数据的时候，汇报空数据
         if None is data_usage or None is self._last_data_usage:
-            return []
+            return [],[]
 
         # 计算流量差值
         traffic_data = []
+        ip_data = []
         for sha224_hash, data in data_usage.items():
             if data['upload'] != 0 or data['download'] != 0:
                 last_data = self._get_last_usage(sha224_hash)
@@ -86,8 +87,24 @@ class Worker:
                 diff_downloaded = int((data['download'] - last_data['download']))
                 if diff_uploaded != 0 or diff_downloaded != 0:
                     traffic_data.append({'user_id': data['id'], 'u': diff_uploaded, 'd': diff_downloaded})
+                    ip_data.append({'user_id': data['id'], 'ip': '127.0.0.1'})
 
-        return traffic_data
+        return traffic_data,ip_data
+
+    def _generate_get_ips(self, data_usage):
+        # 当没有历史数据的时候，汇报空数据
+        if None is data_usage or None is self._last_data_usage:
+            return []
+
+        traffic_data = []
+        for sha224_hash, data in data_usage.items():
+            if data['upload'] != 0 or data['download'] != 0:
+                last_data = self._get_last_usage(sha224_hash)
+                diff_uploaded = int((data['upload'] - last_data['upload']))
+                diff_downloaded = int((data['download'] - last_data['download']))
+                if diff_uploaded != 0 or diff_downloaded != 0:
+                    traffic_data.append({'user_id': data['id'], 'ip': '127.0.0.1'})
+        return traffic_data    
 
     @staticmethod
     def _get_node_info():
@@ -103,8 +120,9 @@ class Worker:
         with self._connect_trojan_server() as connection:
             try:
                 data_usage = self._get_user_usage(connection)
-                node_usage = self._generate_ssp_node_usage(data_usage)
+                node_usage,ip_data = self._generate_ssp_node_usage(data_usage)
                 self._sspanel.add_traffic({'data': node_usage})
+                self._sspanel.add_alive_ip({'data': ip_data})
                 self._last_data_usage = data_usage
                 user_count = len(node_usage)
                 if user_count != 0:
