@@ -6,7 +6,7 @@ Wants=network.target trojan-go.service
 [Service]
 Type=simple
 #User=nobody
-ExecStart=/opt/sspanel-trojan-go/main.py --config /opt/sspanel-trojan-go/config.ini
+ExecStart=python3 /root/sspanel-trojan-go-1/main.py --config /root/sspanel-trojan-go-1/config.ini
 Restart=on-failure
 
 [Install]
